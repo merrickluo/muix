@@ -45,14 +45,17 @@
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'unpack-go-mod
-            (lambda* (#:key inputs outputs #:allow-other-keys)
-              (invoke "tar" "--strip-component=1" "-xvf" (assoc-ref inputs "go-mod") "-C" "src/github.com/v2fly/v2ray-core")
+            (lambda* (#:key inputs import-path #:allow-other-keys)
+              (invoke "tar" "--strip-component=1" "-xvf"
+                      (assoc-ref inputs "go-mod") "-C"
+                      (string-append "src/" import-path))
               #t))
           (replace 'build
-            (lambda* (#:key inputs outputs import-path #:allow-other-keys)
-              (setenv "CGO_ENABLED" "0")
-              (invoke "go" "build" "-v" "-x" "-o" (string-append (assoc-ref outputs "out") "/bin/v2ray") "-trimpath" (string-append import-path "/main"))))
-          )))
+            (lambda* (#:key outputs import-path #:allow-other-keys)
+              (setenv "CGO_ENABLED" "0") ;; disable cgo
+              (let ((out (string-append (assoc-ref outputs "out") "/bin/v2ray"))
+                    (main (string-append import-path "/main")))
+                (invoke "go" "build" "-v" "-x" "-o" out "-trimpath" main)))))))
     (native-inputs
      `(("tar" ,tar)
        ("go-mod" ,(go-mod-vendor-source name version))))
