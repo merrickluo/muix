@@ -17,14 +17,12 @@
          (default v2ray))
   (arguments v2ray-configuration-arguments ;list of strings
              (default '()))
-  (user      v2ray-configuration-user      ;string
-             (default #f))
-  (group     v2ray-configuration-group     ;string
-             (default "users")))
+  (config-file v2ray-configuration-config-file ;json config file
+               (default '())))
 
 (define v2ray-shepherd-service
   (match-record-lambda <v2ray-configuration>
-      (v2ray arguments logflags user group home home-service?)
+      (v2ray arguments config-file)
     (list
      (shepherd-service
       (provision '(v2ray))
@@ -34,7 +32,7 @@
                 (append (list (string-append #$v2ray "/bin/v2ray")
                               "run"
                               "-config"
-                              (string-append "--logflags=" (number->string #$logflags)))
+                              '#$config-file)
                         '#$arguments)))
       (respawn? #f)
       (stop #~(make-kill-destructor))))))
