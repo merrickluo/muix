@@ -33,7 +33,8 @@
                               "run"
                               "-config"
                               '#$config-file)
-                        '#$arguments)))
+                        '#$arguments)
+                #:log-file "/var/log/v2ray.log"))
       (respawn? #f)
       (stop #~(make-kill-destructor))))))
 

@@ -59,14 +59,23 @@
                       (string-append "src/" import-path))
               #t))
           (replace 'build
-            (lambda* (#:key outputs import-path #:allow-other-keys)
+            (lambda* (#:key name inputs outputs import-path #:allow-other-keys)
               (setenv "CGO_ENABLED" "0") ;; disable cgo
-              (let ((out (string-append (assoc-ref outputs "out") "/bin/v2ray"))
-                    (main (string-append import-path "/main")))
-                (invoke "go" "build" "-v" "-x" "-o" out "-trimpath" main)))))))
-    (native-inputs
-     `(("tar" ,tar)
-       ("go-mod" ,(go-mod-vendor-source name version "14s918l8cjzdxs2rlg207f7165wz5vbr0cf8ydcnip5pq20wb62k"))))
+              (let* ((out (assoc-ref outputs "out"))
+                     (binpath (string-append out "/bin/v2ray"))
+                     (main (string-append import-path "/main")))
+                ;; build v2ray binary
+                (invoke "go" "build" "-v" "-x" "-o" binpath "-trimpath" main))))
+          ;; TODO: make v2ray find geoip.dat geosite.dat in other place
+          (add-after 'install 'install-geo-data
+            (lambda* (#:key outputs #:allow-other-keys)
+              (let ((binout (string-append (assoc-ref outputs "out") "/bin")))
+                (invoke "cp" (string-append #$v2ray-geoip-bin "/share/v2ray/geoip.dat") binout)
+                (invoke "cp" (string-append #$v2ray-geosite-bin "/share/v2ray/geosite.dat") binout)))))))
+    (native-inputs `(("tar" ,tar)))
+    (inputs
+     `(("go-mod" ,(go-mod-vendor-source name version "14s918l8cjzdxs2rlg207f7165wz5vbr0cf8ydcnip5pq20wb62k"))))
+    (propagated-inputs (list v2ray-geoip-bin v2ray-geosite-bin))
     (home-page "https://github.com/v2fly/v2ray-core")
     (synopsis "A platform for building proxies to bypass network restrictions.")
     (description "Project V is a set of network tools that helps you to build
