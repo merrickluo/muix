@@ -4,6 +4,7 @@
   #:use-module (guix gexp)
   #:use-module (guix records)
   #:use-module (gnu packages golang-crypto)
+  #:use-module (muix packages shadowsocks)
   #:use-module (ice-9 match)
   #:use-module (srfi srfi-1)
   #:export (shadowsocks-configuration
@@ -22,6 +23,8 @@
   (method shadowsocks-configuration-method
           (default "AEAD_CHACHA20_POLY1305"))
   (password shadowsocks-configuration-password)
+  (plugin-packages shadowsocks-configuration-plugin-packages ;; additional packages
+                   (default '()))
   (plugin shadowsocks-configuration-plugin
           (default ""))
   (plugin-opts shadowsocks-configuration-plugin-opts
@@ -47,6 +50,8 @@
                               "-cipher" #$method
                               (if #$verbose "-verbose")
                               "-password" #$password))
+                #:environment-variables
+                (list "PATH=/run/current-system/profile/bin")
                 #:log-file "/var/log/shadowsocks.log"))
       (respawn? #f)
       (stop #~(make-kill-destructor))))))
@@ -54,5 +59,7 @@
 (define shadowsocks-go2-service-type
   (service-type (name 'shadowsocks)
                 (extensions (list (service-extension shepherd-root-service-type
-                                                     shadowsocks-go2-shepherd-service)))
+                                                     shadowsocks-go2-shepherd-service)
+                                  (service-extension profile-service-type
+                                                     (compose shadowsocks-configuration-plugin-packages))))
                 (description "Run shadowsocks-go2, client or server depends on the config.")))
