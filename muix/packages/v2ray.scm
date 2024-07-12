@@ -17,6 +17,7 @@
   #:use-module (guix build utils)
   #:use-module ((guix licenses) #:prefix license:))
 
+;; TODO replace this in house
 (define* (go-mod-vendor-source package version hash)
   (let ((pv (string-append package "-" version)))
     (origin
