@@ -65,13 +65,7 @@
                      (binpath (string-append out "/bin/v2ray"))
                      (main (string-append import-path "/main")))
                 ;; build v2ray binary
-                (invoke "go" "build" "-v" "-x" "-o" binpath "-trimpath" main))))
-          ;; TODO: make v2ray find geoip.dat geosite.dat in other place
-          (add-after 'install 'install-geo-data
-            (lambda* (#:key outputs #:allow-other-keys)
-              (let ((binout (string-append (assoc-ref outputs "out") "/bin")))
-                (invoke "cp" (string-append #$v2ray-geoip-bin "/share/v2ray/geoip.dat") binout)
-                (invoke "cp" (string-append #$v2ray-geosite-bin "/share/v2ray/geosite.dat") binout)))))))
+                (invoke "go" "build" "-v" "-x" "-o" binpath "-trimpath" main)))))))
     (native-inputs `(("tar" ,tar)))
     (inputs
      `(("go-mod" ,(go-mod-vendor-source name version "14s918l8cjzdxs2rlg207f7165wz5vbr0cf8ydcnip5pq20wb62k"))))
