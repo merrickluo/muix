@@ -36,7 +36,7 @@
 
 (define shadowsocks-go2-shepherd-service
   (match-record-lambda <shadowsocks-configuration>
-      (shadowsocks server-address local-address method password plugin plugin-opts verbose)
+      (shadowsocks server-address local-address method password udp plugin plugin-opts verbose)
     (list
      (shepherd-service
       (provision '(shadowsocks))
