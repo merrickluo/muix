@@ -23,6 +23,8 @@
   (method shadowsocks-configuration-method
           (default "AEAD_CHACHA20_POLY1305"))
   (password shadowsocks-configuration-password)
+  (udp shadowsocks-configuration-udp
+       (default #t))
   (plugin-packages shadowsocks-configuration-plugin-packages ;; additional packages
                    (default '()))
   (plugin shadowsocks-configuration-plugin
@@ -30,8 +32,7 @@
   (plugin-opts shadowsocks-configuration-plugin-opts
                (default ""))
   (verbose shadowsocks-configuration-verbose
-           (default #t))
-  )
+           (default #t)))
 
 (define shadowsocks-go2-shepherd-service
   (match-record-lambda <shadowsocks-configuration>
@@ -48,6 +49,7 @@
                               "-plugin" #$plugin
                               "-plugin-opts" #$plugin-opts
                               "-cipher" #$method
+                              (if #$udp "-udp")
                               (if #$verbose "-verbose")
                               "-password" #$password))
                 #:environment-variables
