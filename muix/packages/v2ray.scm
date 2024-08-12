@@ -19,11 +19,11 @@
 
 ;; TODO replace this in house
 (define* (go-mod-vendor-source package version hash)
-  (let ((pv (string-append package "-" version)))
+  (let ((pv (string-append package "-v" version)))
     (origin
       (method url-fetch)
       (uri (string-append
-            "https://github.com/Puqns67/gentoo-deps/releases/download/" pv "/" pv "-vendor.tar.xz"))
+            "https://github.com/merrickluo/go-deps/releases/download/" pv "/" pv "-vendor.tar.xz"))
       (sha256 (base32 hash)))))
 
 (define* (gh-release-origin repo name version hash)
@@ -69,7 +69,7 @@
                 (invoke "go" "build" "-v" "-x" "-o" binpath "-trimpath" main)))))))
     (native-inputs `(("tar" ,tar)))
     (inputs
-     `(("go-mod" ,(go-mod-vendor-source name version "14s918l8cjzdxs2rlg207f7165wz5vbr0cf8ydcnip5pq20wb62k"))))
+     `(("go-mod" ,(go-mod-vendor-source name version "08qs7r1bdj1n62ygk4h30hqdrlajczqjd8h8w8p14szz5i8al3rb"))))
     (propagated-inputs (list v2ray-geoip-bin v2ray-geosite-bin))
     (home-page "https://github.com/v2fly/v2ray-core")
     (synopsis "A platform for building proxies to bypass network restrictions.")
