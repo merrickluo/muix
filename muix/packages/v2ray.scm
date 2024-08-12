@@ -4,6 +4,7 @@
 ;;;
 
 (define-module (muix packages v2ray)
+  #:use-module (muix source)
   #:use-module (guix build-system go)
   #:use-module (guix build-system copy)
   #:use-module (guix gexp)
@@ -16,22 +17,6 @@
   #:use-module (gnu packages golang-build)
   #:use-module (guix build utils)
   #:use-module ((guix licenses) #:prefix license:))
-
-;; TODO replace this in house
-(define* (go-mod-vendor-source package version hash)
-  (let ((pv (string-append package "-v" version)))
-    (origin
-      (method url-fetch)
-      (uri (string-append
-            "https://github.com/merrickluo/go-deps/releases/download/" pv "/" pv "-vendor.tar.xz"))
-      (sha256 (base32 hash)))))
-
-(define* (gh-release-origin repo name version hash)
-  ;; v2fly/domain-list-community
-  (origin
-    (method url-fetch)
-    (uri (string-append "https://github.com/" repo "/releases/download/" version "/" name))
-    (sha256 (base32 hash))))
 
 (define-public v2ray
   (package
