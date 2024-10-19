@@ -4,7 +4,7 @@
   #:use-module (guix gexp)
   #:use-module (guix records)
   #:use-module (gnu packages golang-crypto)
-  #:use-module (muix packages shadowsocks)
+  #:use-module (muix packages proxy)
   #:use-module (ice-9 match)
   #:use-module (srfi srfi-1)
   #:export (shadowsocks-configuration
@@ -36,27 +36,27 @@
 
 (define shadowsocks-go2-shepherd-service
   (match-record-lambda <shadowsocks-configuration>
-      (shadowsocks server-address local-address method password udp plugin plugin-opts verbose)
-    (list
-     (shepherd-service
-      (provision '(shadowsocks))
-      (documentation "Run shadowsocks.")
-      (requirement '(networking))
-      (start #~(make-forkexec-constructor
-                (append (list (string-append #$shadowsocks "/bin/go-shadowsocks2")
-                              "-s" #$server-address
-                              "-c" #$local-address
-                              "-plugin" #$plugin
-                              "-plugin-opts" #$plugin-opts
-                              "-cipher" #$method
-                              (if #$udp "-udp")
-                              (if #$verbose "-verbose")
-                              "-password" #$password))
-                #:environment-variables
-                (list "PATH=/run/current-system/profile/bin")
-                #:log-file "/var/log/shadowsocks.log"))
-      (respawn? #f)
-      (stop #~(make-kill-destructor))))))
+                       (shadowsocks server-address local-address method password udp plugin plugin-opts verbose)
+                       (list
+                        (shepherd-service
+                         (provision '(shadowsocks))
+                         (documentation "Run shadowsocks.")
+                         (requirement '(networking))
+                         (start #~(make-forkexec-constructor
+                                   (append (list (string-append #$shadowsocks "/bin/go-shadowsocks2")
+                                                 "-s" #$server-address
+                                                 "-c" #$local-address
+                                                 "-plugin" #$plugin
+                                                 "-plugin-opts" #$plugin-opts
+                                                 "-cipher" #$method
+                                                 (if #$udp "-udp")
+                                                 (if #$verbose "-verbose")
+                                                 "-password" #$password))
+                                   #:environment-variables
+                                   (list "PATH=/run/current-system/profile/bin")
+                                   #:log-file "/var/log/shadowsocks.log"))
+                         (respawn? #f)
+                         (stop #~(make-kill-destructor))))))
 
 (define shadowsocks-go2-service-type
   (service-type (name 'shadowsocks)

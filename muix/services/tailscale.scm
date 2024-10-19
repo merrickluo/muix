@@ -1,5 +1,5 @@
 (define-module (muix services tailscale)
-  #:use-module (muix packages tailscale)
+  #:use-module (muix packages vpn)
   #:use-module (gnu services)
   #:use-module (gnu services shepherd)
   #:use-module (gnu services configuration)

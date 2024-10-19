@@ -1,5 +1,5 @@
 (define-module (muix services v2ray)
-  #:use-module (muix packages v2ray)
+  #:use-module (muix packages proxy)
   #:use-module (gnu services)
   #:use-module (gnu services shepherd)
   #:use-module (guix gexp)
@@ -22,23 +22,23 @@
 
 (define v2ray-shepherd-service
   (match-record-lambda <v2ray-configuration>
-      (package arguments config-file)
-    (list
-     (shepherd-service
-      (provision '(v2ray))
-      (documentation "Run v2ray.")
-      (requirement '(networking))
-      (start #~(make-forkexec-constructor
-                (append (list (string-append #$package "/bin/v2ray")
-                              "run"
-                              "-config"
-                              '#$config-file)
-                        '#$arguments)
-                #:log-file "/var/log/v2ray.log"
-                #:environment-variables
-                (list "XDG_DATA_DIRS=/run/current-system/profile/share/")))
-      (respawn? #f)
-      (stop #~(make-kill-destructor))))))
+                       (package arguments config-file)
+                       (list
+                        (shepherd-service
+                         (provision '(v2ray))
+                         (documentation "Run v2ray.")
+                         (requirement '(networking))
+                         (start #~(make-forkexec-constructor
+                                   (append (list (string-append #$package "/bin/v2ray")
+                                                 "run"
+                                                 "-config"
+                                                 '#$config-file)
+                                           '#$arguments)
+                                   #:log-file "/var/log/v2ray.log"
+                                   #:environment-variables
+                                   (list "XDG_DATA_DIRS=/run/current-system/profile/share/")))
+                         (respawn? #f)
+                         (stop #~(make-kill-destructor))))))
 
 (define v2ray-service-type
   (service-type (name 'v2ray)

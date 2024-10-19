@@ -1,12 +1,22 @@
-(define-module (muix packages shadowsocks)
+;;; Copyright © 2024 Merrick Luo <merrick@luois.me>
+;;;
+;;; This file is NOT part of GNU Guix.
+;;;
+
+(define-module (muix packages proxy)
+  #:use-module (muix build source)
+  #:use-module (guix build-system go)
   #:use-module (guix build-system cargo)
   #:use-module (guix build-system gnu)
+  #:use-module (guix build-system copy)
+  #:use-module (guix gexp)
   #:use-module (guix git-download)
   #:use-module (guix download)
   #:use-module (guix packages)
-  #:use-module (guix gexp)
   #:use-module (gnu packages base)
-  #:use-module (gnu packages rust)
+  #:use-module (gnu packages admin)
+  #:use-module (gnu packages golang)
+  #:use-module (gnu packages golang-build)
   #:use-module (gnu packages crates-io)
   #:use-module (gnu packages autotools)
   #:use-module (gnu packages docbook)
@@ -15,7 +25,87 @@
   #:use-module (gnu packages libevent)
   #:use-module (gnu packages documentation)
   #:use-module (gnu packages compression)
+  #:use-module (guix build utils)
   #:use-module ((guix licenses) #:prefix license:))
+
+(define-public v2ray
+  (package
+    (name "v2ray")
+    (version "5.20.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/v2fly/v2ray-core")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256 (base32 "1w9d0f3syxw58ji7c6rb74m6qgnz05hjcnplz59rfpimqn1cb0zm"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:go go-1.22
+      #:import-path "github.com/v2fly/v2ray-core"
+      #:install-source? #f
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'unpack-go-mod
+            (lambda* (#:key inputs import-path #:allow-other-keys)
+              (invoke "tar" "--strip-component=1" "-xvf"
+                      (assoc-ref inputs "go-mod") "-C"
+                      (string-append "src/" import-path))
+              #t))
+          (replace 'build
+            (lambda* (#:key name inputs outputs import-path #:allow-other-keys)
+              (setenv "CGO_ENABLED" "0") ;; disable cgo
+              (let* ((out (assoc-ref outputs "out"))
+                     (binpath (string-append out "/bin/v2ray"))
+                     (main (string-append import-path "/main")))
+                ;; build v2ray binary
+                (invoke "go" "build" "-v" "-x" "-o" binpath "-trimpath" main)))))))
+    (native-inputs `(("tar" ,tar)))
+    (inputs
+     `(("go-mod" ,(go-mod-vendor-source name version "1hxhpxhmhaa6vr5xqqgy3kairw0km3zabkbxpry9yms0c364g941"))))
+    (propagated-inputs (list v2ray-geoip-bin v2ray-geosite-bin))
+    (home-page "https://github.com/v2fly/v2ray-core")
+    (synopsis "A platform for building proxies to bypass network restrictions.")
+    (description "Project V is a set of network tools that helps you to build
+your own computer network. It secures your network connections and
+thus protects your privacy.")
+    (license license:expat)))
+
+(define-public v2ray-geoip-bin
+  (package
+    (name "v2ray-geoip-bin")
+    (version "202407110044")
+    (source (gh-release-origin
+             "v2fly/geoip"
+             "geoip.dat"
+             version
+             "1dppq7ra4cf7cs2s3kxgd7qipfyyq22iyv3jzv5jz4zz9y5d7j43"))
+    (build-system copy-build-system)
+    (arguments
+     `(#:install-plan '(("geoip.dat" "share/v2ray/"))))
+    (home-page "https://github.com/v2fly/geoip")
+    (synopsis "GeoIP for V2Ray.")
+    (description "Provide GeoIP for V2Ray to use in routing rules.")
+    (license license:expat)))
+
+(define-public v2ray-geosite-bin
+  (package
+    (name "v2ray-geosite-bin")
+    (version "20240710044910")
+    (source (gh-release-origin
+             "v2fly/domain-list-community"
+             "dlc.dat"
+             version
+             "0sjy3s1sgh3yf9xvy5k4bjqnmph3cwiidgpp70wjljmxpfl9mbax"))
+    (build-system copy-build-system)
+    (arguments
+     `(#:install-plan '(("dlc.dat" "share/v2ray/geosite.dat"))))
+    (home-page "https://github.com/v2fly/domain-list-community")
+    (synopsis "Generated geosite.dat for V2Ray.")
+    (description "This project manages a list of domains, to be used as geosites for routing purpose in Project V.")
+    (license license:expat)))
 
 (define-public simple-obfs
   (let ((commit "486bebd9208539058e57e23a12f23103016e09b4")
@@ -181,13 +271,4 @@ Deprecated. Followed by v2ray-plugin.")
     (home-page "https://github.com/shadowsocks/shadowsocks-rust")
     (synopsis "A Rust port of shadowsocks, this package can't be build right now.")
     (description "Shadowsocks is a fast tunnel proxy that helps you bypass firewalls.")
-    (license license:expat))
-
-  )
-
-;; (origin
-;;        (method git-fetch)
-;;        (uri (git-reference
-;;              (url "https://github.com/shadowsocks/shadowsocks-rust")
-;;              (commit (string-append "v" version))
-;;              (sha256 (base32 "1mfyhqq9kw6jp1x72s9p43fvrxwa2csqcrqr9p534yz9qpmsvwdi")))))
+    (license license:expat)))

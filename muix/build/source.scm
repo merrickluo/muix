@@ -1,4 +1,4 @@
-(define-module (muix source)
+(define-module (muix build source)
   #:use-module (guix packages)
   #:use-module (guix download))
 
